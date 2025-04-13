@@ -7,7 +7,7 @@ const formRoutes = require('./routes/formRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173' })); // Allow requests from frontend
 app.use(bodyParser.json());
 
 // MongoDB connection
@@ -16,6 +16,6 @@ mongoose.connect('mongodb://localhost:27017/googleForms', { useNewUrlParser: tru
   .catch((err) => console.log(err));
 
 // Routes
-app.use('/api/forms', formRoutes);
+app.use('/api/forms', formRoutes); // Ensure routes are registered correctly
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

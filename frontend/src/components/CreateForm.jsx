@@ -4,6 +4,7 @@ import axios from 'axios';
 const CreateForm = () => {
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState([{ label: '', type: 'text' }]);
+  const [shareLink, setShareLink] = useState('');
 
   const handleFieldChange = (index, event) => {
     const newFields = [...fields];
@@ -17,12 +18,28 @@ const CreateForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate fields
+    for (const field of fields) {
+      if (!field.label.trim()) {
+        alert('All fields must have a label.');
+        return;
+      }
+      if (!field.type) {
+        alert('All fields must have a type.');
+        return;
+      }
+    }
+
     try {
-      await axios.post('http://localhost:5000/api/forms', { title, fields });
+      const res = await axios.post('http://localhost:5000/api/forms', { title, fields });
+      const formId = res.data._id;
+      const link = `http://localhost:5173/fill-form/${formId}`; // Update link to your frontend port
+      setShareLink(link);
       alert('Form Created!');
     } catch (err) {
-      console.error('Error creating form:', err.response?.data?.message || err.message);
-      alert(`Error: ${err.response?.data?.message || 'Failed to create form'}`);
+      console.error('Error creating form:', err.response?.data || err.message); // Log detailed error
+      alert(`Error: ${err.response?.data?.message || 'Failed to create form'}`); // Show error message
     }
   };
 
@@ -75,6 +92,16 @@ const CreateForm = () => {
           Create Form
         </button>
       </form>
+
+      {/* Share Link Section */}
+      {shareLink && (
+        <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-800 rounded">
+          <p><strong>Share this form link:</strong></p>
+          <a href={shareLink} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
+            {shareLink}
+          </a>
+        </div>
+      )}
     </div>
   );
 };
