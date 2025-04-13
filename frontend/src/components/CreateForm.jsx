@@ -50,9 +50,9 @@ const CreateForm = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/forms', { title, fields });
+      const res = await axios.post('https://bvs-dynamic-form.onrender.com/api/forms', { title, fields });
       const formId = res.data._id;
-      const link = `http://localhost:5173/fill-form/${formId}`;
+      const link = `https://bvs-form.web.app/fill-form/${formId}`;
       setShareLink(link);
       toast.success('Form created successfully!');
     } catch (err) {

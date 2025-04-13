@@ -9,10 +9,13 @@ const FillForm = () => {
   const [form, setForm] = useState(null);
   const [responses, setResponses] = useState([]);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const BASE_URL = 'https://bvs-dynamic-form.onrender.com'; // ✅ Always use production backend
+
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/forms/${formId}`)
+    axios.get(`${BASE_URL}/api/forms/${formId}`)
       .then((res) => {
         console.log('Form data fetched successfully:', res.data);
         setForm(res.data);
@@ -20,9 +23,9 @@ const FillForm = () => {
       })
       .catch((err) => {
         console.error('Error fetching form:', err.response?.data || err.message);
-        console.error('Error details:', err);
         toast.error(`Error fetching form: ${err.response?.data?.error || 'Unknown error'}`);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [formId]);
 
   const handleChange = (index, value) => {
@@ -45,6 +48,7 @@ const FillForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validation
     for (let i = 0; i < form.fields.length; i++) {
       const field = form.fields[i];
       const response = responses[i];
@@ -67,7 +71,7 @@ const FillForm = () => {
       })),
     };
 
-    axios.post(`http://localhost:5000/api/forms/${formId}/submit`, payload)
+    axios.post(`${BASE_URL}/api/forms/${formId}/submit`, payload)
       .then(() => {
         toast.success('Form submitted successfully!');
         setSubmitted(true);
@@ -79,7 +83,13 @@ const FillForm = () => {
       });
   };
 
-  if (!form) return <div className="text-center mt-10">Loading form...</div>;
+  if (loading) {
+    return <div className="text-center mt-10">Loading form...</div>;
+  }
+
+  if (!form) {
+    return <div className="text-center mt-10 text-red-500">Form not found or failed to load.</div>;
+  }
 
   return (
     <>
@@ -88,7 +98,7 @@ const FillForm = () => {
         {submitted ? (
           <div className="text-center">
             <h1 className="text-2xl font-bold text-green-500">Thank you for submitting the form!</h1>
-            <p className="mt-2 text-lg">We appreciate your response. You will be redirected shortly.</p>
+            <p className="mt-2 text-lg">You will be redirected shortly.</p>
           </div>
         ) : (
           <>
@@ -97,10 +107,11 @@ const FillForm = () => {
               {form.fields.map((field, index) => (
                 <div key={index} className="mb-4">
                   <label className="block text-gray-700 mb-1">{field.label}</label>
+
                   {field.type === 'checkbox' && field.options && (
                     <div>
-                      {field.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center mb-2">
+                      {field.options.map((option, i) => (
+                        <div key={i} className="flex items-center mb-2">
                           <input
                             type="checkbox"
                             value={option}
@@ -113,10 +124,11 @@ const FillForm = () => {
                       ))}
                     </div>
                   )}
+
                   {field.type === 'radio' && field.options && (
                     <div>
-                      {field.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center mb-2">
+                      {field.options.map((option, i) => (
+                        <div key={i} className="flex items-center mb-2">
                           <input
                             type="radio"
                             name={`field-${index}`}
@@ -130,6 +142,7 @@ const FillForm = () => {
                       ))}
                     </div>
                   )}
+
                   {['text', 'email', 'number', 'date', 'time'].includes(field.type) && (
                     <input
                       type={field.type}
