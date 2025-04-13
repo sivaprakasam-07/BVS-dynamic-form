@@ -6,6 +6,7 @@ exports.createForm = async (req, res) => {
 
   // Validate request body
   if (!title || !fields || !Array.isArray(fields)) {
+    console.error('Invalid request body:', req.body); // Log invalid request
     return res.status(400).json({ message: 'Invalid request body. Title and fields are required.' });
   }
 

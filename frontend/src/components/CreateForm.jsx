@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const CreateForm = () => {
   const [title, setTitle] = useState('');
-  const [fields, setFields] = useState([{ label: '', type: 'text' }]);
+  const [fields, setFields] = useState([{ label: '', type: 'text', options: [] }]);
   const [shareLink, setShareLink] = useState('');
 
   const handleFieldChange = (index, event) => {
@@ -12,8 +12,20 @@ const CreateForm = () => {
     setFields(newFields);
   };
 
+  const handleOptionChange = (fieldIndex, optionIndex, value) => {
+    const newFields = [...fields];
+    newFields[fieldIndex].options[optionIndex] = value;
+    setFields(newFields);
+  };
+
+  const addOption = (fieldIndex) => {
+    const newFields = [...fields];
+    newFields[fieldIndex].options.push('');
+    setFields(newFields);
+  };
+
   const addField = () => {
-    setFields([...fields, { label: '', type: 'text' }]);
+    setFields([...fields, { label: '', type: 'text', options: [] }]);
   };
 
   const handleSubmit = async (e) => {
@@ -29,17 +41,21 @@ const CreateForm = () => {
         alert('All fields must have a type.');
         return;
       }
+      if (['radio', 'checkbox'].includes(field.type) && field.options.length === 0) {
+        alert('Fields of type "radio" or "checkbox" must have at least one option.');
+        return;
+      }
     }
 
     try {
       const res = await axios.post('http://localhost:5000/api/forms', { title, fields });
       const formId = res.data._id;
-      const link = `http://localhost:5173/fill-form/${formId}`; // Update link to your frontend port
+      const link = `http://localhost:5173/fill-form/${formId}`;
       setShareLink(link);
       alert('Form Created!');
     } catch (err) {
-      console.error('Error creating form:', err.response?.data || err.message); // Log detailed error
-      alert(`Error: ${err.response?.data?.message || 'Failed to create form'}`); // Show error message
+      console.error('Error creating form:', err.response?.data || err.message);
+      alert(`Error: ${err.response?.data?.message || 'Failed to create form'}`);
     }
   };
 
@@ -56,25 +72,53 @@ const CreateForm = () => {
         />
         <div className="space-y-4">
           {fields.map((field, index) => (
-            <div key={index} className="flex space-x-4 items-center">
-              <input
-                type="text"
-                name="label"
-                value={field.label}
-                onChange={(e) => handleFieldChange(index, e)}
-                placeholder="Field Label"
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-              <select
-                name="type"
-                value={field.type}
-                onChange={(e) => handleFieldChange(index, e)}
-                className="p-2 border border-gray-300 rounded-md"
-              >
-                <option value="text">Text</option>
-                <option value="email">Email</option>
-                <option value="number">Number</option>
-              </select>
+            <div key={index} className="space-y-2">
+              <div className="flex space-x-4 items-center">
+                <input
+                  type="text"
+                  name="label"
+                  value={field.label}
+                  onChange={(e) => handleFieldChange(index, e)}
+                  placeholder="Field Label"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+                <select
+                  name="type"
+                  value={field.type}
+                  onChange={(e) => handleFieldChange(index, e)}
+                  className="p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="text">Text</option>
+                  <option value="email">Email</option>
+                  <option value="number">Number</option>
+                  <option value="radio">Radio</option>
+                  <option value="checkbox">Checkbox</option>
+                  <option value="date">Date</option>
+                  <option value="time">Time</option>
+                </select>
+              </div>
+              {['radio', 'checkbox'].includes(field.type) && (
+                <div className="space-y-2">
+                  {field.options.map((option, optionIndex) => (
+                    <div key={optionIndex} className="flex space-x-2 items-center">
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
+                        placeholder="Option"
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addOption(index)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                  >
+                    Add Option
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -93,7 +137,6 @@ const CreateForm = () => {
         </button>
       </form>
 
-      {/* Share Link Section */}
       {shareLink && (
         <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-800 rounded">
           <p><strong>Share this form link:</strong></p>
